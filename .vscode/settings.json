@@ -1,0 +1,8 @@
+{
+  "cSpell.words": ["mailtrap", "onephase", "strapi"],
+  "editor.formatOnSave": true,
+  "eslint.format.enable": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.indentSize": "tabSize",
+  "editor.tabSize": 2
+}

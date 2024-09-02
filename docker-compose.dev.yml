@@ -1,0 +1,98 @@
+version: '3.3'
+
+networks:
+  onephase:
+    driver: bridge
+volumes:
+  db:
+    driver: local
+  webapp:
+    driver: local
+  strapi:
+    driver: local
+  api:
+    driver: local
+
+services:
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${DATABASE_USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+    ports:
+      - '${DATABASE_PORT}:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data:delegated
+    networks:
+      - onephase
+
+  ########################
+  # WebApp server
+  ########################
+  webapp:
+    container_name: onephase-webapp
+    build:
+      context: './'
+      dockerfile: docker/webapp/Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    image: onephase-webapp
+    env_file: .env
+    volumes:
+      - ./projects/webapp:/usr/app/webapp:delegated
+    ports:
+      - '${WEBAPP_PORT}:3000'
+    links:
+      - db:db
+    depends_on:
+      - 'db'
+      - 'api'
+    networks:
+      - 'onephase'
+
+  ########################
+  # Strapi server
+  ########################
+  strapi:
+    container_name: onephase-strapi
+    build:
+      context: './'
+      dockerfile: docker/strapi/Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    image: onephase-strapi
+    volumes:
+      - ./projects/strapi:/usr/app/strapi:delegated
+    ports:
+      - '${STRAPI_PORT}:4200'
+    links:
+      - db:db
+    depends_on:
+      - 'db'
+      - 'api'
+    networks:
+      - 'onephase'
+
+  ########################
+  # API Server
+  ########################
+  api:
+    container_name: onephase-api
+    build:
+      context: './'
+      dockerfile: docker/api/Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    image: onephase-api
+    env_file: .env
+    links:
+      - db:db
+    depends_on:
+      - 'db'
+    ports:
+      - '${API_PORT}:1337'
+    volumes:
+      - ./projects/api/.env:/usr/app/api/.env
+    networks:
+      - 'onephase'
